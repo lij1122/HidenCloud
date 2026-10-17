@@ -1,4 +1,4 @@
-name: Auto Renew HidenCloud
+name: Auto Renew HidenCloud (Account 1)
 
 on:
   workflow_dispatch:
