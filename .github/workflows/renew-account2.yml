@@ -63,6 +63,16 @@ jobs:
             git push origin main
           fi
       
+            - name: 📸 上传调试截图
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-screenshots-2
+          path: |
+            *.png
+            sing-box.log
+          if-no-files-found: ignore
+
       - name: 🧹 清理旧的工作流运行记录
         if: always()
         env:
