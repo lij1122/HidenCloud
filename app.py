@@ -388,6 +388,7 @@ def open_browser(p):
     page.add_init_script(STEALTH_JS)
     return browser, page
 
+FREE_DISCORD_MSG = "To renew a free service"
 def _is_logged_in(page):
     """是否真正处于登录后的控制台状态（防止把官网首页/验证页/登录页误判为登录成功）"""
     try:
@@ -396,7 +397,20 @@ def _is_logged_in(page):
             return False
         if 'auth/login' in url or _is_security_check_page(page):
             return False
+        # 免费服务只能用 Discord 登录续期；若被踢回登录页则视为未登录
+        try:
+            txt = page.locator("body").inner_text(timeout=3000)
+            if FREE_DISCORD_MSG in txt:
+                return False
+        except Exception:
+            pass
         return True
+    except Exception:
+        return False
+
+def _needs_discord_login(page):
+    try:
+        return FREE_DISCORD_MSG in page.locator("body").inner_text(timeout=3000)
     except Exception:
         return False
 
@@ -556,6 +570,12 @@ def renew_service(page):
             page.goto(SERVICE_URL, wait_until="domcontentloaded", timeout=60000)
         handle_cloudflare(page)
         time.sleep(12) # 等待续期页面完全加载,未完全加载无法点击
+        if _needs_discord_login(page):
+            log("⚠️ 当前为免费服务，HidenCloud 要求使用 Discord 登录续期，邮箱/密码或旧 Cookie 无法打开续期弹窗。")
+            page.screenshot(path="renew_needs_discord_login.png")
+            status = "❌ 需要 Discord 登录续期（请更新 COOKIE_VALUE 为 Discord 登录后的 remember_web 值）"
+            send_telegram_notification(status, "未知", "未知", "未知")
+            return False
         log("🖱️ 准备点击 Renew 按钮...")
         renew_btn = page.locator('button:has-text("Renew")')
         create_btn = page.locator('button:has-text("Create Invoice")')
@@ -596,6 +616,9 @@ def renew_service(page):
             log("⚠️ Turnstile 未确认通过，仍将尝试提交...")
             page.screenshot(path="turnstile_timeout.png")
 
+        if _needs_discord_login(page):
+            log("⚠️ 弹窗内跳到 Discord 登录提示，Create Invoice 不可见，停止重试。")
+            return False
         # 点击 Create Invoice；未跳转说明验证未通过/已过期，重做验证后再试
         new_invoice_url = None
         time.sleep(2)
@@ -603,9 +626,14 @@ def renew_service(page):
             log(f"🖱️ 点击 Create Invoice（第 {attempt + 1} 次）...")
             try:
                 create_btn.wait_for(state="visible", timeout=30000)
+                if _needs_discord_login(page):
+                    log("⚠️ 续期需要 Discord 登录，已返回登录页，停止重试。")
+                    break
                 create_btn.click(timeout=20000)
             except Exception as e:
                 log(f"⚠️ 点击 Create Invoice 失败: {e}")
+                if _needs_discord_login(page):
+                    break
                 solve_modal_turnstile(page, timeout=45)
                 time.sleep(2)
                 continue
