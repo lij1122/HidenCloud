@@ -3,7 +3,7 @@ name: Auto Renew HidenCloud (Account 4)
 on:
   workflow_dispatch:
   schedule:
-    - cron: '00 01 * * 4' # 每周二 09:00 CST (UTC 01:00)，可根据账号4实际到期日调整
+    - cron: '00 01 * * 0' # 每周二 09:00 CST (UTC 01:00)，可根据账号4实际到期日调整
 
 permissions:
   contents: write
