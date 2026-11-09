@@ -43,8 +43,8 @@ jobs:
       - name: 🚀 运行续期脚本 (账号 5)
         env:
           EMAIL: ${{ secrets.EMAIL_5 || secrets.EMAIL }}
-          PASSWORD: ${{ secrets.PASSWORD_5 || secrets.PASSWORD }}
-          COOKIE_VALUE: ${{ secrets.COOKIE_VALUE_5 || secrets.COOKIE_VALUE }}
+          REGION: ${{ secrets.REGION_5 || secrets.REGION }}
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN_5 || secrets.DISCORD_TOKEN }}
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN_5 || secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID_5 || secrets.TG_CHAT_ID }}
         run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" python -u app.py
